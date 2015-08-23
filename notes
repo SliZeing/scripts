@@ -1,0 +1,122 @@
+#!/bin/bash
+#
+# Command for notetaking.
+# Syntax: notes <new/edit/view/list/render>
+
+base_dir=~/documents/school/UiO
+
+new() {
+    # Syntax: notes new <course> <date/today>
+    course="${2^^}"
+
+    if [ ! -d "$base_dir/$course" ] || [ -z $course ]; then
+        echo "Error: That course doesn't exist"
+        exit
+    fi
+
+    if [ "$3" = "today" ]; then
+        file="$base_dir/$course/notes/$(date +%Y-%m-%d).md"
+        date=$(date +%Y-%m-%d)
+    elif [ ! -z $3 ]; then
+        file="$base_dir/$course/notes/${3}.md"
+        date=$3
+    else
+        echo "Please input a filename or 'today'"
+        exit
+    fi
+    
+    if [ -f $file ]; then
+        echo "Error: File exists"
+        exit
+    fi
+
+    touch $file
+    echo -e "#Tittel\n> Foreleser: ...  \n> Dato: $date" > $file
+    vim $file 
+}
+
+
+edit() {
+    # Syntax: notes edit <course> <date/relative day>
+    course="${2^^}"
+    file="$base_dir/$course/notes/${3}.md"
+
+    if [ ! -d "$base_dir/$course" ] || [ -z $course ]; then
+        echo "Error: That course doesn't exist"
+        exit
+    fi
+
+    if [ $3 = "today" ]; then
+        file="$base_dir/$course/notes/$(date +%Y-%m-%d).md"
+    elif [ ! -z $3 ]; then
+        file="$base_dir/$course/notes/${3}.md"
+    else
+        echo "Please input a filename or 'today'"
+        exit
+    fi
+    
+    if [ ! -f $file ]; then
+        echo $file
+        echo "Error: File does not exist"
+        exit
+    fi
+
+    vim $file 
+}
+
+render() {
+    # Syntax: notes render <course>
+    course="${2^^}"
+        
+    if [ ! -d "$base_dir/$course" ] || [ -z $course ]; then
+        echo "Error: That course doesn't exist"
+        exit
+    fi
+
+    pandoc --latex-engine=xelatex -V mainfont='Calibri' \
+           -o $base_dir/$course/notes/$course.pdf \
+           $base_dir/$course/notes/*.md
+}
+
+view() {
+    # Syntax: notes view <course>
+    course="${2^^}"
+
+    if [ ! -d "$base_dir/$course" ] || [ -z $course ]; then
+        echo "Error: That course doesn't exist"
+        exit
+    fi
+
+    zathura $base_dir/$course/notes/${course}.pdf &
+}
+
+list() {
+    # Syntax: notes list [course]
+    course="${2^^}"
+
+    if [ -z $2  ]; then
+        echo -e "Avaliable courses:\n$(ls $base_dir | tr '\n' ' ' | rev | cut -c 2- | rev)"
+    else
+        echo -e "Avaliable notes from $course:\n$(ls $base_dir/$course/notes | grep -E '*.md' | sed 's/.md//')"
+    fi
+}
+
+case $1 in
+    new)
+        new $@
+        ;;
+    edit)
+        edit $@
+        ;;
+    render)
+        render $@
+        ;;
+    view)
+        view $@
+        ;;
+    list)
+        list $@
+        ;;
+    *)
+        echo "Invalid command"
+esac

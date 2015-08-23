@@ -1,0 +1,123 @@
+#!/bin/bash
+#
+# Command for assignments.
+# Syntax: assignments <new/edit/view/list/render>
+
+base_dir=~/documents/school/UiO
+username="nicolaei"
+
+new() {
+    # Syntax: assignments new <course> <date/today>
+    course="${2^^}"
+
+    if [ ! -d "$base_dir/$course" ] || [ -z $course ]; then
+        echo "Error: That course doesn't exist"
+        exit
+    fi
+
+    if [ ! -z $3 ]; then
+        file="$base_dir/$course/assignments/$3/${3}.md"
+        date=$3
+    else
+        echo "Please input a filename"
+        exit
+    fi
+    
+    if [ -f $file ]; then
+        echo "Error: File exists"
+        exit
+    fi
+    
+    mkdir $base_dir/$course/assignments/$3
+    touch $file
+    vim $file 
+}
+
+
+edit() {
+    # Syntax: assignments edit <course> <assignment>
+    course="${2^^}"
+    file="$base_dir/$course/assignments/$3/${3}.md"
+
+    if [ ! -d "$base_dir/$course" ] || [ -z $course ]; then
+        echo "Error: That course doesn't exist"
+        exit
+    fi
+
+    if [ ! -z $3 ]; then
+        file="$base_dir/$course/assignments/$3/${3}.md"
+    else
+        echo "Please input a filename"
+        exit
+    fi
+    
+    if [ ! -f $file ]; then
+        echo $file
+        echo "Error: File does not exist"
+        exit
+    fi
+
+    vim $file 
+}
+
+render() {
+    # Syntax: assignments render <course> <assingment>
+    course="${2^^}"
+        
+    if [ ! -d "$base_dir/$course" ] || [ -z $course ]; then
+        echo "Error: That course doesn't exist"
+        exit
+    fi
+
+    pandoc --latex-engine=xelatex -V mainfont='Calibri' \
+           -o $base_dir/$course/assignments/$3/$username-${3}.pdf \
+           $base_dir/$course/assignments/$3/*.md
+}
+
+view() {
+    # Syntax: assignments view <course> <assignment>
+    course="${2^^}"
+
+    if [ ! -d "$base_dir/$course" ] || [ -z $course ]; then
+        echo "Error: That course doesn't exist"
+        exit
+    fi
+
+    if [ -z $3 ]; then
+        echo "Please input an assignment"
+        exit
+    fi
+
+    zathura $base_dir/$course/assignments/$3/$username-${3}.pdf &
+}
+
+list() {
+    # Syntax: assignments list [course]
+    course="${2^^}"
+
+    if [ -z $2  ]; then
+        echo -e "Avaliable courses:\n$(ls $base_dir | tr '\n' ' ' | rev | cut -c 2- | rev)"
+    else
+        echo -e "Avaliable assignments from $course:\n$(ls $base_dir/$course/assignments)"
+    fi
+}
+
+case $1 in
+    new)
+        new $@
+        ;;
+    edit)
+        edit $@
+        ;;
+    render)
+        render $@
+        ;;
+    view)
+        view $@
+        ;;
+    list)
+        list $@
+        ;;
+    *)
+        echo "Invalid command"
+esac

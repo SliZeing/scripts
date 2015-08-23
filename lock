@@ -1,0 +1,5 @@
+#!/bin/bash
+scrot /tmp/lock_screen.png
+convert /tmp/lock_screen.png -scale 5% -scale 2000% /tmp/lock_screen.png
+#convert /tmp/lock_screen.png -channel RGBA -blur 0x12 /tmp/lock_screen.png
+i3lock -i /tmp/lock_screen.png
